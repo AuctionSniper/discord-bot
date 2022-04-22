@@ -1,0 +1,49 @@
+{
+  "name": "discord-bot",
+  "version": "1.0.0",
+  "author": "Ian",
+  "private": true,
+  "license": "MIT",
+  "main": "build/index.js",
+  "scripts": {
+    "build": "tsc",
+    "build:changelog": "yarn @discordx/changelog --root=src",
+    "dev": "nodemon --exec node --loader ts-node/esm/transpile-only src/index.ts",
+    "start": "node build/main.js"
+  },
+  "dependencies": {
+    "@discordx/importer": "^1.1.2",
+    "@discordx/pagination": "^2.0.1",
+    "discord.js": "^13.6.0",
+    "discordx": "^9.5.2",
+    "dotenv": "^16.0.0",
+    "ioredis": "^5.0.4",
+    "millify": "^4.0.0",
+    "node-fetch": "^2.6.7",
+    "prismarine-nbt": "^2.2.1",
+    "reflect-metadata": "^0.1.13",
+    "string-similarity": "^4.0.4",
+    "throttled-queue": "^2.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.25",
+    "@types/string-similarity": "^4.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.19.0",
+    "@typescript-eslint/parser": "^5.19.0",
+    "eslint": "^8.13.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-import-resolver-typescript": "^2.7.1",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-import-helpers": "^1.2.1",
+    "eslint-plugin-prettier": "^4.0.0",
+    "nodemon": "^2.0.15",
+    "prettier": "^2.6.2",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.3"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=7.0.0"
+  }
+}
