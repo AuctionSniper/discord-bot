@@ -15,11 +15,7 @@ export class RenderCommand {
     player: string,
     interaction: CommandInteraction,
   ) {
-    const {
-      data: {
-        player: { username, id },
-      },
-    } = await fetchId(player);
+    const { username, id } = await fetchId(player);
 
     const embed = new MessageEmbed()
       .setColor('#555555')
