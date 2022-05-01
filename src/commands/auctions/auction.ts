@@ -1,5 +1,20 @@
-import { CommandInteraction, EmbedFieldData, MessageEmbed } from 'discord.js';
-import { Discord, Slash, SlashGroup, SlashOption } from 'discordx';
+import {
+  ButtonInteraction,
+  CommandInteraction,
+  EmbedFieldData,
+  MessageActionRow,
+  MessageButton,
+  MessageEmbed,
+  MessageSelectMenu,
+  MessageSelectOptionData,
+} from 'discord.js';
+import {
+  ButtonComponent,
+  Discord,
+  Slash,
+  SlashGroup,
+  SlashOption,
+} from 'discordx';
 import millify from 'millify';
 import stringSimilarity from 'string-similarity';
 
@@ -44,10 +59,14 @@ export class AuctionGroup {
       });
     }
 
+    const activeAuctions = auctions.filter(auction => {
+      return auction.end > Date.now();
+    });
+
     const auctionFields: EmbedFieldData[] = [];
 
     await Promise.all(
-      auctions.map(async auction => {
+      activeAuctions.map(async auction => {
         const price = millify(auction.price, {
           precision: 3,
           lowercase: true,
@@ -63,7 +82,7 @@ export class AuctionGroup {
       }),
     );
 
-    const totalPrice = auctions.reduce((accumulator, auction) => {
+    const activePrice = activeAuctions.reduce((accumulator, auction) => {
       return accumulator + auction.price;
     }, 0);
 
@@ -72,7 +91,7 @@ export class AuctionGroup {
       .setTitle(`${username}'s auctions`)
       .setThumbnail(`https://mc-heads.net/body/${id}/left`)
       .setDescription(
-        `Value: **${millify(totalPrice, {
+        `Value: **${millify(activePrice, {
           precision: 3,
           lowercase: true,
         })}**`,
@@ -86,7 +105,7 @@ export class AuctionGroup {
         },
         {
           name: 'Results',
-          value: `${auctions.length}`,
+          value: `${activeAuctions.length}`,
           inline: true,
         },
       ])
@@ -95,8 +114,112 @@ export class AuctionGroup {
         iconURL: 'https://github.com/ianlibanio.png',
       });
 
-    interaction.editReply({
+    const endedButton = new MessageButton()
+      .setLabel('Ended Auctions')
+      .setEmoji('📑')
+      .setStyle('PRIMARY')
+      .setCustomId(`ended-button_${id}`)
+      .setDisabled(auctions.length === activeAuctions.length);
+
+    const visualizeOptions: MessageSelectOptionData[] = [];
+    activeAuctions.forEach(auction => {
+      visualizeOptions.push({
+        label: auction.name,
+        value: auction.uuid,
+      });
+    });
+
+    const visualizeSelectMenu = new MessageSelectMenu()
+      .addOptions(visualizeOptions)
+      .setCustomId('auction-visualize');
+
+    const row = new MessageActionRow().addComponents(
+      endedButton,
+      visualizeSelectMenu,
+    );
+
+    await interaction.editReply({
       embeds: [embed],
+      components: [row],
+    });
+  }
+
+  @ButtonComponent(/((ended-button_)[^\s]*)\b/gm)
+  async endedButton(interaction: ButtonInteraction) {
+    const [, id] = interaction.customId.split('_');
+
+    const auctions = await fetchAuctions(id, process.env.API_KEY);
+
+    const endedAuctions = auctions.filter(auction => {
+      return Date.now() > auction.end;
+    });
+
+    if (endedAuctions.length === 0) {
+      const embed = new MessageEmbed()
+        .setColor('#ff3333')
+        .setTitle('Ended auctions')
+        .setThumbnail(`https://mc-heads.net/body/${id}/left`)
+        .setDescription('No ended auctions found.')
+        .setFooter({
+          text: 'Made with 🖤 by Ian Libânio.',
+          iconURL: 'https://github.com/ianlibanio.png',
+        });
+
+      interaction.reply({
+        embeds: [embed],
+        ephemeral: true,
+      });
+    }
+
+    const auctionFields: EmbedFieldData[] = [];
+
+    await Promise.all(
+      endedAuctions.map(async auction => {
+        const price = millify(auction.price, {
+          precision: 3,
+          lowercase: true,
+        });
+
+        const endTime = Math.round(auction.end / 1000);
+
+        auctionFields.push({
+          name: auction.name,
+          value: `Price: **${price}**\nEnded: <t:${endTime}>\nRarity: **${auction.tier}**`,
+          inline: false,
+        });
+      }),
+    );
+
+    const endedPrice = endedAuctions.reduce((accumulator, auction) => {
+      return accumulator + auction.price;
+    }, 0);
+
+    const embed = new MessageEmbed()
+      .setColor('#555555')
+      .setTitle('Ended auctions')
+      .setThumbnail(`https://mc-heads.net/body/${id}/left`)
+      .setDescription(
+        `Value to claim: **${millify(endedPrice, {
+          precision: 3,
+          lowercase: true,
+        })}**`,
+      )
+      .addFields(auctionFields)
+      .addFields([
+        {
+          name: 'Results',
+          value: `${endedAuctions.length}`,
+          inline: true,
+        },
+      ])
+      .setFooter({
+        text: 'Made with 🖤 by Ian Libânio.',
+        iconURL: 'https://github.com/ianlibanio.png',
+      });
+
+    interaction.reply({
+      embeds: [embed],
+      ephemeral: true,
     });
   }
 }

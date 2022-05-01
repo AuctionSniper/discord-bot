@@ -10,8 +10,8 @@ export const client = new Client({
 
   intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.DIRECT_MESSAGES],
 
-  // botGuilds: [process.env.DEV_GUILD],
-  botGuilds: [client => client.guilds.cache.map(guild => guild.id)],
+  botGuilds: [process.env.DEV_GUILD],
+  // botGuilds: [client => client.guilds.cache.map(guild => guild.id)],
 
   silent: false, // Show debug logs
 });
